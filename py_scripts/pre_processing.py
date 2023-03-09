@@ -109,6 +109,26 @@ def load_dataset() -> pd.DataFrame:
     return dataset
 
 
+def load_cleaned_dataset():
+    """
+    Charge le jeu de données normalisé de speed dating.
+
+    Returns:
+        pd.DataFrame: Le DataFrame normalisé de speed dating.
+    """
+    gt = 30
+    to_mulhot_encode = ["work_field", "career", "from"]
+
+    dataset = load_dataset()
+    dataset, _ = remove_cols_with_null_data(dataset, gt)
+    dataset = normalize_range_columns(dataset)
+    dataset = remove_cols_personnality_snd(dataset)
+    dataset = get_multhot_dataframe(dataset, to_mulhot_encode)
+    dataset = fill_nan_dataframe(dataset)
+
+    return dataset
+
+
 def normalize_range(value: int, min: int, max: int, born_max: int = 10) -> int:
     """
     Normalise une valeur en la convertissant en une valeur comprise entre 0 et un maximum borné donné.
@@ -219,24 +239,27 @@ def get_multhot_series(series: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(df_onehot)
 
 
-def get_multhot_dataframe(dataframe: pd.DataFrame, column: str) -> pd.DataFrame:
+def get_multhot_dataframe(dataframe: pd.DataFrame, columns: list) -> pd.DataFrame:
     """
     Applique la méthode de multiple hot encoding à une colonne du dataframe. 
     La colonne `columns` est supprimée.
 
     Args:
         dataframe (pd.DataFrame): Le dataframe.
-        column (str): Le nom de la colonne à transformer
+        column (list): La liste des colonnes à transformer
 
     Returns:
         pd.DataFrame: Le dataframe avec les colonnes encodées.
 
     """
-    df_multhot = get_multhot_series(dataframe[column])
-    df_concat = pd.concat([dataframe, df_multhot], axis=1)
-    df_concat.drop(columns=[column], axis=1, inplace=True)
+    df_multhot = dataframe
 
-    return df_concat
+    for col in columns:
+        df_multhot_series = get_multhot_series(df_multhot[col])
+        df_multhot = pd.concat([df_multhot, df_multhot_series], axis=1)
+        df_multhot.drop(columns=[col], axis=1, inplace=True)
+
+    return df_multhot
 
 
 def remove_cols_with_null_data(df_removed: pd.DataFrame, gt: int = 0):

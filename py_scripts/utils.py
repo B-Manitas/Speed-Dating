@@ -29,6 +29,20 @@ import pandas as pd
 DATA_FOLDER = "../data/"
 
 
+def count_multiple_columns(dataframe: pd.DataFrame, column: str, blacklist: list = []):
+    df = filter_dataframe_by_substr(dataframe, column)
+    df = pd.crosstab(
+        **df.melt(var_name='columns', value_name='index'))  # type: ignore
+
+    df.drop(columns=blacklist, inplace=True)
+
+    data = df.iloc[1].sort_values(ascending=False)
+    values = data.values
+    labels = " ".join(data.keys()).replace(column, "").split()
+
+    return values, labels
+
+
 def filter_dataframe_by_substr(dataframe: pd.DataFrame, substr: str = "") -> pd.DataFrame:
     """
     Retourne le sous-ensemble du dataframe dont les noms des colonnes contienent le mot `substr`. 
