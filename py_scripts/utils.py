@@ -30,13 +30,33 @@ DATA_FOLDER = "../data/"
 
 
 def count_multiple_columns(dataframe: pd.DataFrame, column: str, blacklist: list = []):
-    df = filter_dataframe_by_substr(dataframe, column)
-    df = pd.crosstab(
-        **df.melt(var_name='columns', value_name='index'))  # type: ignore
+    """
+    Retourne le nombres d'occurences pour chaque colonne qui contient une sous-chaîne `str` dans son nom.
 
+    Args:
+        dataframe (pd.DataFrame): Le DataFrame contenant les données à traiter.
+        column (str): La sous-chaîne de caractères à rechercher dans les noms des colonnes.
+        blacklist (list, optional): Liste des noms de colonnes à exclure des résultats. Par défaut [].
+
+    Returns:
+        Tuple[List[int], List[str]]: Un tuple contenant deux listes : 
+            la première contient les valeurs des occurences
+            la seconde contient les noms des colonnes.
+    """
+    # Filtrer le DataFrame pour inclure seulement les lignes où la colonne spécifiée contient la sous-chaîne
+    df = filter_dataframe_by_substr(dataframe, column)
+
+    # Transforme les colonnes de df en lignes.
+    col_to_line = df.melt(var_name='columns', value_name='index')
+
+    # Calcule la table de fréquence des colonnes
+    df = pd.crosstab(**col_to_line)  # type: ignore
+
+    # Supprime les colonnes spécifiées dans la liste "blacklist"
     df.drop(columns=blacklist, inplace=True)
 
     data = df.iloc[1].sort_values(ascending=False)
+
     values = data.values
     labels = " ".join(data.keys()).replace(column, "").split()
 
@@ -94,6 +114,17 @@ def get_files_bow(series: str) -> str:
 
     # Retourne le nom du fichier qui correspond à la série.
     return files[series] + ".json"
+
+
+def get_matching_keys(keys, sub_strs: list) -> list:
+    """
+    Renvoie les clefs de `keys` qui ont une sous chaine de caractère de la liste `sub_strs`.
+
+    Args:
+      keys (list): liste de chaînes
+      sub_strs (list): liste des chaînes à rechercher dans les clés
+    """
+    return [k for c in sub_strs for k in keys if c in k]
 
 
 def isnan(o: object) -> bool:
