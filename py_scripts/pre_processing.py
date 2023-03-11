@@ -126,7 +126,18 @@ def load_cleaned_dataset():
     dataset = get_multhot_dataframe(dataset, to_mulhot_encode)
     dataset = fill_nan_dataframe(dataset)
 
-    return dataset
+def normalize_dataframe(dataframe: pd.DataFrame, columns: list):
+    """
+    Cette fonction prend une trame de données et une liste de colonnes et renvoie une trame de données
+    avec les colonnes normalisées
+
+    Args:
+      dataframe (pd.DataFrame): Le dataframe.
+      columns (list): La liste des colonnes à normaliser.
+    """
+    df_norm = dataframe[columns]
+    df_norm = (df_norm - df_norm.min()) / (df_norm.max() - df_norm.min())
+    dataframe.update(df_norm)
 
 
 def normalize_range(value: int, min: int, max: int, born_max: int = 10) -> int:
@@ -383,3 +394,16 @@ def summarize_null_data(dataframe: pd.DataFrame, displaying: bool = False) -> pd
         df_null = pd.concat([df_null, row])
 
     return df_null.sort_values(by="count")
+
+
+def standardize_dataframe(dataframe: pd.DataFrame, columns: list):
+    """
+    Cette fonction standardise les colonnes d'un dataframe.
+
+    Args:
+      dataframe (pd.DataFrame): Le dataframe.
+      columns (list): Liste des colonnes à standardiser.
+    """
+    df_stand = dataframe[columns]
+    df_stand = (df_stand - df_stand.mean()) / df_stand.std()
+    dataframe.update(df_stand)
