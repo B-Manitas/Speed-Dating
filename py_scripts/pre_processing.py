@@ -46,6 +46,7 @@ import pandas as pd
 import numpy as np
 import json
 import re
+from sklearn.model_selection import GroupShuffleSplit
 
 # Custom packages
 import py_scripts.utils as ut
@@ -251,8 +252,8 @@ def normalize_dataframe(dataframe: pd.DataFrame, columns: list):
     avec les colonnes normalisées
 
     Args:
-      dataframe (pd.DataFrame): Le dataframe.
-      columns (list): La liste des colonnes à normaliser.
+        dataframe (pd.DataFrame): Le dataframe.
+        columns (list): La liste des colonnes à normaliser.
     """
     df_norm = dataframe[columns]
     df_norm = (df_norm - df_norm.min()) / (df_norm.max() - df_norm.min())
@@ -513,16 +514,3 @@ def summarize_null_data(dataframe: pd.DataFrame, displaying: bool = False) -> pd
         df_null = pd.concat([df_null, row])
 
     return df_null.sort_values(by="count")
-
-
-def standardize_dataframe(dataframe: pd.DataFrame, columns: list):
-    """
-    Cette fonction standardise les colonnes d'un dataframe.
-
-    Args:
-      dataframe (pd.DataFrame): Le dataframe.
-      columns (list): Liste des colonnes à standardiser.
-    """
-    df_stand = dataframe[columns]
-    df_stand = (df_stand - df_stand.mean()) / df_stand.std()
-    dataframe.update(df_stand)
