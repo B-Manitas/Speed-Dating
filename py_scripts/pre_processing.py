@@ -3,15 +3,25 @@ Le fichier `pre-processing` contient un ensemble de fonctions utilisé pour le p
 
 
 Functions:
-    fill_nan_series(series: pd.Series, by=None) -> pd.Series:
+    enc_multhot_dataframe(dataframe: pd.DataFrame, columns: list) -> pd.DataFrame
+
+    fill_nan_series(series: pd.Series, by=None) -> pd.Series
     
-    fill_nan_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
+    fill_nan_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame
+
+    get_multhot_columns(series: pd.Series) -> pd.DataFrame
 
     load_dataset() -> pd.DataFrame
+
+    load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_y: bool = True)
+
+    normalize_dataframe(dataframe: pd.DataFrame, columns: list)
     
     normalize_range(value: int, min: int, max: int, born_max: int = 10) -> int
     
     normalize_range_columns(dataframe: pd.DataFrame) -> pd.DataFrame
+
+    preprocessing_dataframe(dataframe: pd.DataFrame, rescaled: bool = True) -> pd.DataFrame
     
     remove_cols_with_null_data(df_removed: pd.DataFrame, gt: int = 0) -> (pd.DataFrame, pd.DataFrame)
 
@@ -20,6 +30,8 @@ Functions:
     rename_dataframe_columns(dataframe: pd.DataFrame) -> pd.DataFrame
     
     remove_dataframe_columns(dataframe: pd.DataFrame) -> pd.DataFrame 
+
+    split_X_y(dataframe: pd.DataFrame, index: list)
     
     summarize_null_data(dataframe: pd.DataFrame, displaying: bool = False) -> pd.DataFrame 
 """
