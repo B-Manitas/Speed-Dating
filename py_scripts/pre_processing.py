@@ -109,22 +109,59 @@ def load_dataset() -> pd.DataFrame:
     return dataset
 
 
-def load_cleaned_dataset():
+def load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_y: bool = True):
     """
-    Charge le jeu de données normalisé de speed dating.
+    Charge le jeu de données néttoyé et normalisé de speed dating.
+
+    Args:
+        ratio_test (float, optional): Le ratio de la taille du jeu de test. Par défauts, 0.2.
+        rescaled (boolean, optional): Si True rescaled les données, sinon non. 
+        Permets de visualiser les données originales. Par défauts, True.
+        split_y (boolean, optional): Si True renvoie deux dataframe, le premier correcponds 
+        aux inputs et le second aux targets. Par défauts, True.
 
     Returns:
-        pd.DataFrame: Le DataFrame normalisé de speed dating.
+        (pd.DataFrame, pd.DataFrame), (pd.DataFrame, pd.DataFrame): (x_train, y_train), (x_test, y_test).
+        pd.DataFrame, pd.DataFrame: train, test.
     """
-    gt = 30
-    to_mulhot_encode = ["work_field", "career", "from"]
-
+    # Charge le dataset.
     dataset = load_dataset()
-    dataset, _ = remove_cols_with_null_data(dataset, gt)
+
+    # Sépare le dataset
+    groups = dataset["id_group"]
+    df_x = dataset["match"]
+    df_y = dataset.drop(
+        columns=["id_group", "match", "decision", "p_decision"])
+
+    # Clean le dataset.
+    dataset, _ = remove_cols_with_null_data(dataset, 30)
     dataset = normalize_range_columns(dataset)
-    dataset = remove_cols_personnality_snd(dataset)
-    dataset = get_multhot_dataframe(dataset, to_mulhot_encode)
-    dataset = fill_nan_dataframe(dataset)
+
+    # Split le dataset.
+    spliter = GroupShuffleSplit(test_size=ratio_test)
+    i_train, i_test = next(spliter.split(df_y, df_x, groups))
+
+    if split_y:
+        # Sépare les inputs et targets du dataframe.
+        x_train, y_train = split_X_y(dataset, i_train)
+        x_test, y_test = split_X_y(dataset, i_test)
+
+        # Applique le preprocessing sur les dataset d'entrainement et de test séparément.
+        x_train = preprocessing_dataframe(x_train, rescaled)
+        x_test = preprocessing_dataframe(x_test, rescaled)
+
+        return (x_train, y_train), (x_test, y_test)
+
+    else:
+        train = dataset.iloc[i_train]
+        test = dataset.iloc[i_test]
+
+        # Applique le preprocessing sur les dataset d'entrainement et de test séparément.
+        train = preprocessing_dataframe(train, rescaled)
+        test = preprocessing_dataframe(test, rescaled)
+
+        return train, test
+
 
 def normalize_dataframe(dataframe: pd.DataFrame, columns: list):
     """
@@ -203,74 +240,41 @@ def normalize_range_columns(dataframe: pd.DataFrame) -> pd.DataFrame:
     return dataframe
 
 
-def get_multhot_series(series: pd.Series) -> pd.DataFrame:
+def preprocessing_dataframe(dataframe: pd.DataFrame, rescaled: bool = True) -> pd.DataFrame:
     """
-    Renvoie le dataframe qui correspond à l'encodage par la méthode du multiple hot encoding appliqué à la colonne séries.    
+    Renvoie le dataframe néttoyer avec les méthodes de pré-proccesing.
 
     Args:
-        series: La colonne à appliquer le multiple hot encoding.
+        dataframe (pd.DataFrame): Le dataframe à nettoyer.
+        rescaled (boolean, optional): Si True rescaled les données, sinon non. 
+            Permets de visualiser les données originales. Par défaut, True.
 
     Returns:
-        pd.DataFrame : Le dataframe avec les données encodées avec la méthode.
-
+        Le dataframe néttoyé.
     """
-    # Transforme en minuscule
-    series = series.str.lower()
+    # Déclaration des variables nécéssaires.
+    blacklist = ["career_c", "id_work_field"]
+    to_mulhot_encode = ["work_field", "career", "from"]
 
-    # Supprimes les caractères spéciaux
-    series = series.str.replace(r"[^a-z ]", " ", regex=True)
+    norm_columns = ["world_pref", "imprelig", "sports", "rate_prob_like"]
+    norm_substr = ["p_important_", "p_rate_", "interest_", "rate_self_"]
+    stand_columns = ["p_age", "p_race", "age", "exp_relation", "number_match",
+                     "frequency_go_out"]
 
-    # Tokenize les domaines de travails
-    series = series.str.split(" ")
+    # Applique le préprocessing sur le dataset.
+    dataset = remove_cols_personnality_snd(dataframe)
+    dataset = enc_multhot_dataframe(dataset, to_mulhot_encode)
+    dataset = fill_nan_dataframe(dataset)
+    dataset.drop(columns=blacklist, inplace=True, axis=1)
+    dataset.drop(dataset[dataset.p_id.isna()].index, inplace=True)
 
-    # Supprime les mots ayant moins de deux caractère.
-    series = series.map(lambda x: [e for e in x if len(e) > 2], "ignore")
+    # Re-scaling du dataset.
+    if rescaled:
+        norm_substr = ut.get_matching_keys(dataset.columns, norm_substr)
+        normalize_dataframe(dataset, norm_columns + norm_substr)
+        standardize_dataframe(dataset, stand_columns)
 
-    # Récupère le nom du fichier du sac de mot.
-    bow_file = ut.get_files_bow(str(series.name))
-
-    # Ouvre le fichier bag of word des domaines de travails.
-    with open(DATA_FOLDER + "bag_of_words/" + bow_file, "r") as f:
-        bag_of_word, fields = json.load(f)
-        df_onehot = ut.get_dict_onehot(series, fields)
-
-        # Parcours chaque ligne du DataFrame.
-        for i in range(series.size):
-            series_i = series[i]
-
-            # Si la valeur est non nul.
-            if not ut.isnan(series_i):
-                work_i = " ".join(series_i)
-
-                for word in bag_of_word:
-                    if re.search(word, work_i):
-                        key = f"{series.name}_{bag_of_word[word]}"
-                        df_onehot[key][i] = 1
-
-    return pd.DataFrame(df_onehot)
-
-
-def get_multhot_dataframe(dataframe: pd.DataFrame, columns: list) -> pd.DataFrame:
-    """
-    Applique la méthode de multiple hot encoding à une colonne du dataframe. 
-    La colonne `columns` est supprimée.
-
-    Args:
-        dataframe (pd.DataFrame): Le dataframe.
-        column (list): La liste des colonnes à transformer
-
-    Returns:
-        pd.DataFrame: Le dataframe avec les colonnes encodées.
-
-    """
-    df_multhot = dataframe
-
-    for col in columns:
-        df_multhot_series = get_multhot_series(df_multhot[col])
-        df_multhot = pd.concat([df_multhot, df_multhot_series], axis=1)
-        df_multhot.drop(columns=[col], axis=1, inplace=True)
-
-    return df_multhot
+    return dataset
 
 
 def remove_cols_with_null_data(df_removed: pd.DataFrame, gt: int = 0):
@@ -362,6 +366,39 @@ def remove_dataframe_columns(dataframe: pd.DataFrame) -> pd.DataFrame:
         dataframe = dataframe.drop(columns=labels)
 
     return dataframe
+
+
+def split_X_y(dataframe: pd.DataFrame, index: list):
+    """
+    Sépare les valeurs d'input et d'output du `dataframe`.
+
+    Args:
+        dataframe (pd.DataFrame): Le DataFrame à séparer.
+        index (list): La listes des index à garder du `dataframe`. 
+
+    Returns:
+        pd.DataFrame, pd.DataFrame : 
+            Le premier dataframe correspond au input. 
+            Le second dataframe correspond au output.
+    """
+    x = dataframe.iloc[index]
+    x = x.drop(columns=["match", "decision", "p_decision"])
+
+    y = dataframe.iloc[index]["match"].to_frame()
+    return x, y
+
+
+def standardize_dataframe(dataframe: pd.DataFrame, columns: list):
+    """
+    Cette fonction standardise les colonnes d'un dataframe.
+
+    Args:
+        dataframe (pd.DataFrame): Le dataframe.
+        columns (list): Liste des colonnes à standardiser.
+    """
+    df_stand = dataframe[columns]
+    df_stand = (df_stand - df_stand.mean()) / df_stand.std()
+    dataframe.update(df_stand)
 
 
 def summarize_null_data(dataframe: pd.DataFrame, displaying: bool = False) -> pd.DataFrame:
