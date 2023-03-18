@@ -42,6 +42,29 @@ import py_scripts.utils as ut
 DATA_FOLDER = "../data/"
 
 
+def enc_multhot_dataframe(dataframe: pd.DataFrame, columns: list) -> pd.DataFrame:
+    """
+    Applique la méthode de multiple hot encoding à une colonne du dataframe. 
+    La colonne `columns` est supprimée.
+
+    Args:
+        dataframe (pd.DataFrame): Le dataframe.
+        column (list): La liste des colonnes à transformer
+
+    Returns:
+        pd.DataFrame: Le dataframe avec les colonnes encodées.
+
+    """
+    df_multhot = dataframe.copy()
+
+    for col in columns:
+        df_multhot_col = get_multhot_columns(df_multhot[col])
+        df_multhot = pd.concat([df_multhot, df_multhot_col], axis=1)
+        df_multhot.drop(columns=[col], axis=1, inplace=True)
+
+    return df_multhot
+
+
 def fill_nan_series(series: pd.Series, by=None) -> pd.Series:
     """
     Remplace les valeurs NaN dans une série par une valeur donnée.
@@ -88,6 +111,53 @@ def fill_nan_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
                 dataframe[col] = fill_nan_series(dataframe[col])
 
     return dataframe
+
+
+def get_multhot_columns(series: pd.Series) -> pd.DataFrame:
+    """
+    Renvoie le dataframe qui correspond à l'encodage par la méthode du multiple hot encoding appliqué à la colonne séries.    
+
+    Args:
+        series: La colonne à appliquer le multiple hot encoding.
+
+    Returns:
+        pd.DataFrame : Le dataframe avec les données encodées avec la méthode.
+
+    """
+    # Transforme en minuscule
+    series = series.str.lower()
+
+    # Supprimes les caractères spéciaux
+    series = series.str.replace(r"[^a-z ]", " ", regex=True)
+
+    # Tokenize les domaines de travails
+    series = series.str.split(" ")
+
+    # Supprime les mots ayant moins de deux caractère.
+    series = series.map(lambda x: [e for e in x if len(e) > 2], "ignore")
+
+    # Récupère le nom du fichier du sac de mot.
+    bow_file = ut.get_files_bow(str(series.name))
+
+    # Ouvre le fichier bag of word des domaines de travails.
+    with open(DATA_FOLDER + "bag_of_words/" + bow_file, "r") as f:
+        bag_of_word, fields = json.load(f)
+        dict_onehot = ut.get_dict_onehot(series, fields)
+
+        # Parcours chaque ligne du DataFrame
+        for i in range(len(series)):
+            series_i = series.iloc[i]
+
+            # Si la valeur est non nul.
+            if not ut.isnan(series_i):
+                work_i = " ".join(series_i)
+
+                for word in bag_of_word:
+                    if re.search(word, work_i):
+                        key = f"{series.name}_{bag_of_word[word]}"
+                        dict_onehot[key][0] = 1
+
+    return pd.DataFrame(dict_onehot, index=series.index)
 
 
 def load_dataset() -> pd.DataFrame:
