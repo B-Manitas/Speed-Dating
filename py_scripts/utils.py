@@ -94,7 +94,7 @@ def get_dict_onehot(series: pd.Series, columns: list) -> dict:
         dict: Un dictionnaire contenant les valeurs de la série encodées en one-hot.
 
     """
-    return {f"{series.name}_{c}": [0] * series.size for c in columns}
+    return {f"{series.name}_{c}": [0] * len(series) for c in columns}
 
 
 def get_files_bow(series: str) -> str:
