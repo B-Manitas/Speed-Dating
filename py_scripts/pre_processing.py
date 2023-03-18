@@ -220,9 +220,12 @@ def load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_y:
     dataset, _ = remove_cols_with_null_data(dataset, 30)
     dataset = normalize_range_columns(dataset)
 
+    i_train, i_test = dataset.index.to_list(), []
+
     # Split le dataset.
-    spliter = GroupShuffleSplit(test_size=ratio_test)
-    i_train, i_test = next(spliter.split(df_y, df_x, groups))
+    if ratio_test > 0:
+        spliter = GroupShuffleSplit(test_size=ratio_test)
+        i_train, i_test = next(spliter.split(df_y, df_x, groups))
 
     if split_y:
         # Sépare les inputs et targets du dataframe.
