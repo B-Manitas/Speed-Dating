@@ -11,5 +11,3 @@ Avant d'exécuter le notebook, veuillez installer les packages Python nécessair
 ```
 pip install -r requirements.txt
 ```
-
-Pour continuer, il est nécessaire de télécharger la base de données disponible via ce [lien](https://www.kaggle.com/datasets/whenamancodes/speed-dating). Puis, la placer dans le dossier `./data/` sous le nom de `speed_dating_data.csv`.
