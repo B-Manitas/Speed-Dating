@@ -6,7 +6,7 @@ Functions:
     enc_multhot_dataframe(dataframe: pd.DataFrame, columns: list) -> pd.DataFrame
 
     fill_nan_series(series: pd.Series, by=None) -> pd.Series
-    
+
     fill_nan_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame
 
     get_multhot_columns(series: pd.Series) -> pd.DataFrame
@@ -16,24 +16,24 @@ Functions:
     load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_y: bool = True)
 
     normalize_dataframe(dataframe: pd.DataFrame, columns: list)
-    
+
     normalize_range(value: int, min: int, max: int, born_max: int = 10) -> int
-    
+
     normalize_range_columns(dataframe: pd.DataFrame) -> pd.DataFrame
 
     preprocessing_dataframe(dataframe: pd.DataFrame, rescaled: bool = True) -> pd.DataFrame
-    
+
     remove_cols_with_null_data(df_removed: pd.DataFrame, gt: int = 0) -> (pd.DataFrame, pd.DataFrame)
 
     remove_cols_personnality_snd(dataframe: pd.DataFrame) -> pd.DataFrame
-    
+
     rename_dataframe_columns(dataframe: pd.DataFrame) -> pd.DataFrame
-    
-    remove_dataframe_columns(dataframe: pd.DataFrame) -> pd.DataFrame 
+
+    remove_dataframe_columns(dataframe: pd.DataFrame) -> pd.DataFrame
 
     split_X_y(dataframe: pd.DataFrame, index: list)
-    
-    summarize_null_data(dataframe: pd.DataFrame, displaying: bool = False) -> pd.DataFrame 
+
+    summarize_null_data(dataframe: pd.DataFrame, displaying: bool = False) -> pd.DataFrame
 """
 
 # Metadata
@@ -192,15 +192,15 @@ def load_dataset() -> pd.DataFrame:
     return dataset
 
 
-def load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_y: bool = True):
+def load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_X_y: bool = True):
     """
     Charge le jeu de données néttoyé et normalisé de speed dating.
 
     Args:
         ratio_test (float, optional): Le ratio de la taille du jeu de test. Par défauts, 0.2.
-        rescaled (boolean, optional): Si True rescaled les données, sinon non. 
+        rescaled (boolean, optional): Si True rescaled les données, sinon non.
         Permets de visualiser les données originales. Par défauts, True.
-        split_y (boolean, optional): Si True renvoie deux dataframe, le premier correcponds 
+        split_X_y (boolean, optional): Si True renvoie deux dataframe, le premier correcponds
         aux inputs et le second aux targets. Par défauts, True.
 
     Returns:
@@ -210,27 +210,15 @@ def load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_y:
     # Charge le dataset.
     dataset = load_dataset()
 
-    # Sépare le dataset
-    groups = dataset["id_group"]
-    df_x = dataset["match"]
-    df_y = dataset.drop(
-        columns=["id_group", "match", "decision", "p_decision"])
-
     # Clean le dataset.
     dataset, _ = remove_cols_with_null_data(dataset, 30)
     dataset = normalize_range_columns(dataset)
 
-    i_train, i_test = dataset.index.to_list(), []
+    train, test = split_by_groups(dataset, ratio_test)
 
-    # Split le dataset.
-    if ratio_test > 0:
-        spliter = GroupShuffleSplit(test_size=ratio_test)
-        i_train, i_test = next(spliter.split(df_y, df_x, groups))
-
-    if split_y:
-        # Sépare les inputs et targets du dataframe.
-        x_train, y_train = split_X_y(dataset, i_train)
-        x_test, y_test = split_X_y(dataset, i_test)
+    if split_X_y:
+        x_train, y_train = get_X_y(train)
+        x_test, y_test = get_X_y(test)
 
         # Applique le preprocessing sur les dataset d'entrainement et de test séparément.
         x_train = preprocessing_dataframe(x_train, rescaled)
@@ -239,9 +227,6 @@ def load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_y:
         return (x_train, y_train), (x_test, y_test)
 
     else:
-        train = dataset.iloc[i_train]
-        test = dataset.iloc[i_test]
-
         # Applique le preprocessing sur les dataset d'entrainement et de test séparément.
         train = preprocessing_dataframe(train, rescaled)
         test = preprocessing_dataframe(test, rescaled)
@@ -332,7 +317,7 @@ def preprocessing_dataframe(dataframe: pd.DataFrame, rescaled: bool = True) -> p
 
     Args:
         dataframe (pd.DataFrame): Le dataframe à nettoyer.
-        rescaled (boolean, optional): Si True rescaled les données, sinon non. 
+        rescaled (boolean, optional): Si True rescaled les données, sinon non.
             Permets de visualiser les données originales. Par défaut, True.
 
     Returns:
@@ -369,11 +354,11 @@ def remove_cols_with_null_data(df_removed: pd.DataFrame, gt: int = 0):
 
     Args:
         dataset (pd.DataFrame): Le DataFrame d'entrée à nettoyer.
-        gt (int, optional): Le seuil de pourcentage de données manquantes. Toutes les colonnes ayant un pourcentage de données 
+        gt (int, optional): Le seuil de pourcentage de données manquantes. Toutes les colonnes ayant un pourcentage de données
         manquantes supérieur ou égal à ce seuil seront supprimées. Par défaut, le seuil est fixé à 0.
 
     Returns:
-        pd.DataFrame, pd.DataFrame: Un tuple contenant le dataframe nettoyé et un dataframe résumant les données 
+        pd.DataFrame, pd.DataFrame: Un tuple contenant le dataframe nettoyé et un dataframe résumant les données
         manquantes pour chaque colonne.
     """
 
@@ -392,7 +377,7 @@ def remove_cols_with_null_data(df_removed: pd.DataFrame, gt: int = 0):
 def remove_cols_personnality_snd(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
     Supprime les colonnes du DataFrame contenant des données de personnalité secondaire.
-    Les données de personnalité secondaire sont celle qui se terminne par un format de type: 
+    Les données de personnalité secondaire sont celle qui se terminne par un format de type:
     `n_x` avec `n` un chiffre et `x` un chffre ou une lettre `s`.
 
     Args:
@@ -454,23 +439,67 @@ def remove_dataframe_columns(dataframe: pd.DataFrame) -> pd.DataFrame:
     return dataframe
 
 
-def split_X_y(dataframe: pd.DataFrame, index: list):
+def get_groups_X_y(dataframe: pd.DataFrame):
+    """
+    Renvoie les groupes, features et targets du `dataframe`.
+
+    Args:
+        dataframe (pd.DataFrame): Le DataFrame.
+
+    Returns:
+        pd.Series, pd.DataFrame, pd.Series: Les DataFrames groups, X et y.
+    """
+    groups = dataframe["id_group"]
+    df_x = dataframe.drop(
+        columns=["id_group", "match", "decision", "p_decision"])
+    df_y = dataframe["match"]
+
+    return groups, df_x, df_y
+
+
+def split_by_groups(dataframe: pd.DataFrame, ratio_test: float = .2):
+    """
+    Renvoie deux dataframe train et tests aléatoire respectant les groupes des données. 
+
+    Args:
+        dataframe (pd.DataFrame): Le DataFrame à diviser.
+        ratio_test (float, optional): Le ratio de la taille du jeu de test. Par défauts, 0.2.
+
+    Returns:
+        pd.DataFrame, pd.DataFrame: Les DataFrames train et test.
+    """
+    if not(0 < ratio_test < 1):
+        return dataframe, pd.DataFrame(columns=dataframe.columns)
+
+    else:
+        splitter = GroupShuffleSplit(n_splits=2, test_size=ratio_test)
+        groups, _, _ = get_groups_X_y(dataframe)
+
+        i_train, i_test = next(splitter.split(dataframe, groups=groups))
+
+        train = dataframe.iloc[i_train]
+        test = dataframe.iloc[i_test]
+
+        return train, test
+
+
+def get_X_y(dataframe: pd.DataFrame):
     """
     Sépare les valeurs d'input et d'output du `dataframe`.
 
     Args:
         dataframe (pd.DataFrame): Le DataFrame à séparer.
-        index (list): La listes des index à garder du `dataframe`. 
+        index (list, optional): La listes des index à garder du `dataframe`. 
+        Si index est vide, alors garde tous les éléments.
 
     Returns:
         pd.DataFrame, pd.DataFrame : 
             Le premier dataframe correspond au input. 
             Le second dataframe correspond au output.
     """
-    x = dataframe.iloc[index]
-    x = x.drop(columns=["match", "decision", "p_decision"])
+    x = dataframe.drop(columns=["match", "decision", "p_decision", "id_group"])
+    y = dataframe["match"].to_frame()
 
-    y = dataframe.iloc[index]["match"].to_frame()
     return x, y
 
 
