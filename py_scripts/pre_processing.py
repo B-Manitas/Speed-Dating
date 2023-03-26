@@ -168,7 +168,7 @@ def get_multhot_columns(series: pd.Series) -> pd.DataFrame:
                 for word in bag_of_word:
                     if re.search(word, work_i):
                         key = f"{series.name}_{bag_of_word[word]}"
-                        dict_onehot[key][0] = 1
+                        dict_onehot[key][i] = 1
 
     return pd.DataFrame(dict_onehot, index=series.index)
 
@@ -192,7 +192,7 @@ def load_dataset() -> pd.DataFrame:
     return dataset
 
 
-def load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_X_y: bool = True):
+def load_preproc_dataset(ratio_test=.2, rescaled: bool = True):
     """
     Charge le jeu de données néttoyé et normalisé de speed dating.
 
@@ -215,23 +215,13 @@ def load_preproc_dataset(ratio_test: float = .2, rescaled: bool = True, split_X_
     dataset = normalize_range_columns(dataset)
 
     train, test = split_by_groups(dataset, ratio_test)
+    test, valid = split_by_groups(test, .5)
 
-    if split_X_y:
-        x_train, y_train = get_X_y(train)
-        x_test, y_test = get_X_y(test)
+    train = preprocessing_dataframe(train, rescaled)
+    test = preprocessing_dataframe(test, rescaled)
+    valid = preprocessing_dataframe(valid, rescaled)
 
-        # Applique le preprocessing sur les dataset d'entrainement et de test séparément.
-        x_train = preprocessing_dataframe(x_train, rescaled)
-        x_test = preprocessing_dataframe(x_test, rescaled)
-
-        return (x_train, y_train), (x_test, y_test)
-
-    else:
-        # Applique le preprocessing sur les dataset d'entrainement et de test séparément.
-        train = preprocessing_dataframe(train, rescaled)
-        test = preprocessing_dataframe(test, rescaled)
-
-        return train, test
+    return train, test, valid
 
 
 def normalize_dataframe(dataframe: pd.DataFrame, columns: list):
@@ -457,22 +447,27 @@ def get_groups_X_y(dataframe: pd.DataFrame):
     return groups, df_x, df_y
 
 
-def split_by_groups(dataframe: pd.DataFrame, ratio_test: float = .2):
+def split_by_groups(dataframe: pd.DataFrame, ratio_test: float = .2, seed : int = 0):
     """
     Renvoie deux dataframe train et tests aléatoire respectant les groupes des données. 
 
     Args:
         dataframe (pd.DataFrame): Le DataFrame à diviser.
         ratio_test (float, optional): Le ratio de la taille du jeu de test. Par défauts, 0.2.
+        seed (int, optional): La graine de l'aléatoire. Par défauts, 0.
 
     Returns:
         pd.DataFrame, pd.DataFrame: Les DataFrames train et test.
     """
-    if not(0 < ratio_test < 1):
+    
+    if len(dataframe) == 0:
+        return dataframe, dataframe
+
+    elif not(0 < ratio_test < 1):
         return dataframe, pd.DataFrame(columns=dataframe.columns)
 
     else:
-        splitter = GroupShuffleSplit(n_splits=2, test_size=ratio_test)
+        splitter = GroupShuffleSplit(n_splits=2, test_size=ratio_test, random_state=seed)
         groups, _, _ = get_groups_X_y(dataframe)
 
         i_train, i_test = next(splitter.split(dataframe, groups=groups))
