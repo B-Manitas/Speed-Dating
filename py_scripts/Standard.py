@@ -1,6 +1,6 @@
 # Metadata
 __author__ = "Eytan Levy, Guillaume Surleau, Manitas Bahri"
-__date__ = "07/2023"
+__date__ = "03/2023"
 
 
 # Librairies import
@@ -10,10 +10,6 @@ import json
 import re
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.decomposition import PCA
-
-# Import custom modules
-import py_scripts.utils as ut
-import py_scripts.Utils as ut2
 
 
 class Standard:

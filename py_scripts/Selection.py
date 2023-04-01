@@ -1,3 +1,7 @@
+# Metadata
+__author__ = "Eytan Levy, Guillaume Surleau, Manitas Bahri"
+__date__ = "03/2023"
+
 # Librairies import
 import pandas as pd
 import numpy as np
@@ -10,8 +14,21 @@ class Selection:
     This class contains the methods to select the features of the dataframe.
     """
 
-    def __init__(self) -> None:
-        pass
+    def get_samples_of_dataframe(self, dataframe: pd.DataFrame, n_sample: int = 500) -> pd.DataFrame:
+        """
+        Get a sample of the dataframe containing the same number of rows with match = 1 and match = 0.
+
+        Args:
+            dataframe (pd.DataFrame): The input dataframe.
+            n_sample (int): The number of rows to sample. By default 500.
+
+        Returns:
+            pd.DataFrame: A sample of the dataframe containing the same number of rows with match = 1 and match = 0.
+        """
+        id_yes = dataframe[dataframe["match"] == 1].index[:n_sample]
+        id_no = dataframe[dataframe["match"] == 0].index[:n_sample]
+
+        return dataframe.iloc[list(id_yes) + list(id_no)]
 
     def get_groups_X_y(self, dataframe: pd.DataFrame):
         """
@@ -41,9 +58,9 @@ class Selection:
         Returns:
             pd.DataFrame, pd.Series: The DataFrames X and y.
         """
-        x = dataframe.drop(
-            columns=["match", "decision", "p_decision", "id_group"])
-        y = dataframe["match"].to_frame()
+        x_to_drop = ["match", "decision", "p_decision", "id_group"]
+        x = dataframe.drop(columns=x_to_drop, errors="ignore")
+        y = pd.DataFrame(dataframe["match"], index=dataframe.index)
 
         return x, y
 
@@ -65,7 +82,7 @@ class Selection:
 
         # If the ratio is not between 0 and 1, return the dataframe and an empty dataframe.
         elif not(0 < ratio_test < 1):
-            return dataframe, pd.DataFrame(columns=dataframe.columns)
+            return dataframe, pd.DataFrame(data=[], columns=dataframe.columns)
 
         # Else, split the dataframe.
         else:

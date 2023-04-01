@@ -38,7 +38,7 @@ class PreProcessing (Standard, Selection):
         pca = PCA(n_components=n_components)
 
         # Apply PCA.
-        df_transform = dataframe.drop(columns=["id_individual", "p_id"])
+        df_transform = dataframe.drop(columns=["id_individual", "p_id"], errors="ignore")
         pca_data = pca.fit_transform(df_transform)
         labels = [f"PC{i}" for i in range(1, len(pca_data[0]) + 1)]
 
@@ -85,7 +85,7 @@ class PreProcessing (Standard, Selection):
         """
         filled_s = series.fillna(by if by else series.mean())
 
-        return filled_s.round() if round else filled_s
+        return filled_s.round().astype(int) if round else filled_s
 
     def fill_nan_dataframe(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """
@@ -102,7 +102,7 @@ class PreProcessing (Standard, Selection):
                             "interrest_correlation"}
 
         # Round this features
-        to_round = {"frequency_go_out", "age", "p_age", }
+        no_round = {"frequency_go_out", "age", "p_age", "number_match"}
 
         # Open the file of the types of the labels of the database.
         with open("../data/labels/types.json", "r") as f:
@@ -113,14 +113,9 @@ class PreProcessing (Standard, Selection):
                 if (col in to_fill_by_zeros) or ("categorical" in dtype.get(col, "")):
                     dataframe[col] = self.fill_nan_series(dataframe[col], 0)
 
-                # Replace NaN values with the mean of the column and round the values
-                if (col in to_round) or ("range" in dtype.get(col, "")):
-                    dataframe[col] = self.fill_nan_series(
-                        dataframe[col], round=True)
-
                 # Replace NaN values with the mean of the column
                 else:
-                    dataframe[col] = self.fill_nan_series(dataframe[col])
+                    dataframe[col] = self.fill_nan_series(dataframe[col], round=True)
 
         return dataframe
 
@@ -224,7 +219,7 @@ class PreProcessing (Standard, Selection):
             pd.DataFrame: The preprocessed dataframe.
         """
         # Define columns to encode, normalize and standardize.
-        blacklist = ["career_c", "id_work_field"]
+        blacklist = ["career_c", "id_work_field", "world"]
         to_mulhot_encode = ["work_field", "career", "from"]
 
         norm_columns = ["world_pref", "imprelig", "sports", "rate_prob_like"]

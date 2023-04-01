@@ -1,11 +1,12 @@
 # Metadata
 __author__ = "Eytan Levy, Guillaume Surleau, Manitas Bahri"
-__date__ = "07/2023"
+__date__ = "03/2023"
 
 
 # Librairies import
 import json
 import pandas as pd
+import numpy as np
 
 
 class Utils:
@@ -62,6 +63,56 @@ class Utils:
         labels = " ".join(data.keys()).replace(column, "").split()
 
         return values, labels
+
+    @classmethod
+    def count_ratio_match_features(cls, dataframe: pd.DataFrame, features: str) -> dict:
+        """
+        Count the ratio of matches for `features`.
+
+        Args:
+            dataframe (pd.DataFrame): The DataFrame containing the data to process.
+            features (str): The substring to search for in the column names.
+
+        Returns:
+            dict: A dictionary containing the ratio of matches for `features`.
+        """
+        careers = Utils.filter_dataframe_by_substr(dataframe, features).columns
+        ratios = {}
+
+        for career in careers:
+            df_career = dataframe[dataframe[career] == 1]
+
+            if len(df_career) == 0:
+                ratio = 0
+
+            else:
+                ratio = np.sum(df_career['match'] == 1) * 100 / len(df_career)
+
+            ratios[career] = ratio
+
+        ratios = dict(
+            sorted(ratios.items(), key=lambda item: item[1], reverse=True))
+        return ratios
+
+    @classmethod
+    def count_match_proportions(cls, dataframe: pd.DataFrame, features: str) -> pd.DataFrame:
+        """
+        Count the proportion of matches for `features`.
+
+        Args:
+            dataframe (pd.DataFrame): The DataFrame containing the data to process.
+            features (str): The substring to search for in the column names.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the proportion of matches for `features`.
+        """
+        df = dataframe.groupby([features, "match"])
+        df = df.size().reset_index(name="count")
+        df_transform = df.groupby(features)["count"].transform("sum")
+
+        df["proportion"] = df["count"] / df_transform
+
+        return df
 
     @classmethod
     def filter_dataframe_by_substr(cls, dataframe: pd.DataFrame, substr: str = "") -> pd.DataFrame:
@@ -212,24 +263,6 @@ class Utils:
             # Display the list of unknown labels
             if unknown_labels:
                 print(f"label(s) inconnu(s): {unknown_labels}")
-
-    @classmethod
-    def get_samples_of_dataframe(cls, dataframe: pd.DataFrame, n_sample: int = 500) -> pd.DataFrame:
-        """
-        Get a sample of the dataframe containing the same number of rows with match = 1 and match = 0.
-
-        Args:
-            dataframe (pd.DataFrame): The input dataframe.
-            n_sample (int): The number of rows to sample. By default 500.
-
-        Returns:
-            pd.DataFrame: A sample of the dataframe containing the same number of rows with match = 1 and match = 0.
-        """
-        id_yes = dataframe[dataframe["match"] == 1].index[:n_sample]
-        id_no = dataframe[dataframe["match"] == 0].index[:n_sample]
-
-        return dataframe.iloc[list(id_yes) + list(id_no)]
-
 
     @classmethod
     def summarize_null_data(cls, dataframe: pd.DataFrame, displaying: bool = False) -> pd.DataFrame:
