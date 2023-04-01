@@ -6,12 +6,63 @@ __date__ = "03/2023"
 # Librairies import
 from matplotlib import pyplot as plt
 import numpy as np
+import pandas as pd
+import json
+
+from .PreProcessing import PreProcessing
 
 
 class Model:
     """
     Tools to train and test a model.
     """
+
+    def __init__(self):
+        self.n_pca = 74
+        self.preproc = PreProcessing()
+        self.form_path = "../data/form.json"
+
+    def set_form_path(self, form_path):
+        """
+        Set the path of the form.
+
+        Args:
+            form_path: The path of the form.
+        """
+        self.form_path = form_path
+
+    def set_model(self, model):
+        """
+        Set the model.
+
+        Args:
+            model: The model to set.
+        """
+        self.model = model
+
+    def predict_user(self) -> None:
+        """
+        Predict the user's match.
+        """
+        print("Loading user data...")
+
+        with open(self.form_path, "r") as f:
+            form = json.load(f)
+            df_form = pd.DataFrame.from_dict(form, orient="index").T
+
+            print("Preprocessing user data...")
+            df_form = self.preproc.preprocessing_dataframe(df_form)
+            
+            # pca_cols = [f"PC{i}" for i in range(1, self.n_pca + 1)]
+            # pca_renm = { df_form.columns[i] : pca_cols[i] for i in range(len(df_form.columns)) }
+            
+            # df_form = df_form.rename(columns=pca_renm)
+
+            # print("Predicting user match...")
+            # match_proba = self.model.predict_proba(df_form)
+            # match_proba = match_proba[0, 1]
+
+        # print("\nThe model predicts a match with a probability of: ", match_proba)
 
     def curve_range(self, scores: np.ndarray):
         """
@@ -44,7 +95,8 @@ class Model:
             param_name (str): The name of the parameter.
             param_range (np.ndarray): The range of the parameter.
         """
-        train_mean, train_fill_lo, train_fill_up = self.curve_range(train_score)
+        train_mean, train_fill_lo, train_fill_up = self.curve_range(
+            train_score)
         test_mean, test_fill_lo, test_fill_up = self.curve_range(test_score)
 
         plt.plot(param_range, train_mean, label="train curve", marker="o")

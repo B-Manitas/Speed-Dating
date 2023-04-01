@@ -35,18 +35,17 @@ class PreProcessing (Standard, Selection):
         Returns:
             pd.DataFrame: The DataFrame with the new columns.
         """
-        pca = PCA(n_components=n_components)
+        pca = PCA(n_components=n_components, random_state=0)
 
         # Apply PCA.
         df_transform = dataframe.drop(columns=["id_individual", "p_id"], errors="ignore")
         pca_data = pca.fit_transform(df_transform)
+
         labels = [f"PC{i}" for i in range(1, len(pca_data[0]) + 1)]
 
         # Create a new dataframe with the PCA data.
         pca_df = pd.DataFrame(pca_data, columns=labels,
                               index=dataframe.index)
-        pca_df["id_individual"] = dataframe["id_individual"]
-        pca_df["p_id"] = dataframe["p_id"]
 
         return pca_df
 
@@ -231,8 +230,8 @@ class PreProcessing (Standard, Selection):
         dataset = self.remove_cols_personnality_snd(dataframe)
         dataset = self.enc_multhot_dataframe(dataset, to_mulhot_encode)
         dataset = self.fill_nan_dataframe(dataset)
-        dataset.drop(columns=blacklist, inplace=True, axis=1)
-        dataset.drop(dataset[dataset.p_id.isna()].index, inplace=True)
+        dataset.drop(columns=blacklist, inplace=True, axis=1, errors="ignore")
+        dataset.drop(dataset[dataset.p_id.isna()].index, inplace=True, errors="ignore")
 
         # Rescaling the dataset.
         if rescaled:

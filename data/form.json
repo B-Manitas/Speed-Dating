@@ -1,0 +1,67 @@
+{
+  "gender": 0,
+  "age": 18,
+  
+  "samerace": 0,
+  "exphappy": 0,
+  "number_match": 0,
+  
+  "p_race": 0,
+  "p_age": 18,
+  "p_id": 0,
+  "id_individua": 0,
+
+  "world_pref": 0,
+  "imprelig": 0,
+  "exp_relation": 0,
+  "frequency_go_out": 0,
+  "sports": 0,
+
+  "interrest_correlation": 0,
+
+  "p_important_attractive": 0,
+  "p_important_sinsere": 0,
+  "p_important_intelligence": 0,
+  "p_important_fun": 0,
+  "p_important_ambitious": 0,
+  "p_important_shared_interests": 0,
+
+  "p_rate_attractive": 0,
+  "p_rate_sincere": 0,
+  "p_rate_intelligence": 0,
+  "p_rate_fun": 0,
+  "p_rate_ambitious": 0,
+  "p_rate_shared_interests": 0,
+  "p_rate_like": 0,
+  "p_rate_prob_like": 0,
+
+  "interest_tvsports": 0,
+  "interest_exercise": 0,
+  "interest_dining": 0,
+  "interest_museums": 0,
+  "interest_art": 0,
+  "interest_hiking": 0,
+  "interest_gaming": 0,
+  "interest_clubbing": 0,
+  "interest_reading": 0,
+  "interest_tv": 0,
+  "interest_theater": 0,
+  "interest_movies": 0,
+  "interest_concerts": 0,
+  "interest_music": 0,
+  "interest_shopping": 0,
+  "interest_yoga": 0,
+
+  "rate_self_attractive": 0,
+  "rate_self_sincere": 0,
+  "rate_self_intelligence": 0,
+  "rate_self_fun": 0,
+  "rate_self_ambitious": 0,
+  "rate_self_shared_interests": 0,
+  "rate_self_like": 0,
+  "rate_prob_like": 0,
+
+  "work_field": "",
+  "career": "",
+  "from": ""
+}
