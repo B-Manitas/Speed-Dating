@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.decomposition import PCA
+from imblearn.under_sampling import RandomUnderSampler
 
 
 class Selection:
@@ -96,3 +97,25 @@ class Selection:
             test = dataframe.iloc[i_test]
 
             return train, test
+
+    def undersampling(self, x: pd.DataFrame, y: pd.DataFrame):
+        """
+        Return the undersampled data.
+
+        Args:
+            x (pd.DataFrame): The features.
+            y (pd.DataFrame): The targets.
+
+        Returns:
+            pd.DataFrame, pd.DataFrame: The undersampled features and targets.
+        """
+        
+        # Create the training data with the SMOTE algorithm.
+        rus = RandomUnderSampler(random_state=0)
+        x_sampled, y_sampled = rus.fit_resample(x, y) # type: ignore   
+
+        # Convert the numpy arrays to dataframes.
+        x_sampled = pd.DataFrame(x_sampled, columns=x.columns, index=x_sampled.index)
+        y_sampled = pd.DataFrame(y_sampled, columns=["match"], index=y_sampled.index)
+
+        return x_sampled, y_sampled
