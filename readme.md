@@ -31,6 +31,9 @@ project: preprocessing, visualization, and model training.
 ## Authors
 This project was carried out as part of a university project with [@gui2L](https://github.com/gui2L) and [@betacodd](https://github.com/betacodd).
 
+<br>
+<br>
+<br>
 
 ____
 # Speed Dating : Prédiction d'un match amoureux.
