@@ -2,3 +2,5 @@ matplotlib
 numpy
 pandas
 seaborn
+scikit-learn
+imbalanced-learn
