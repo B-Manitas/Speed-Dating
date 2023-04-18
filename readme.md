@@ -1,5 +1,8 @@
-# **[En]** Speed Dating: Prediction of a Romantic Match
-This Data Science project, implemented in Python 3, aims to study romantic dates using the [Speed Dating](kaggle.com/datasets/whenamancodes/speed-dating) database available on Kaggle. This database was created from data collected during speed dating events in the United States, where participants filled out questionnaires before and after the events.
+![Cover](dataset-cover.jpg)
+
+
+# Speed Dating: Prediction of a Romantic Match
+This Data Science project, implemented in Python 3, aims to study romantic dates using the [Speed Dating](https://kaggle.com/datasets/whenamancodes/speed-dating) database available on Kaggle. This database was created from data collected during speed dating events in the United States, where participants filled out questionnaires before and after the events.
 
 ## Context
 The goal of this project is to predict whether two single individuals can form a couple based on their preferences, personality traits, and other demographic characteristics. To achieve this, we will use binary classification techniques to predict "yes" or "no" outcomes based on individual characteristics.
@@ -30,8 +33,8 @@ This project was carried out as part of a university project with [@gui2L](https
 
 
 ____
-# **[Fr]** Speed Dating : Prédiction d'un match amoureux.
-Ce projet de Data Science, réalisé en Python 3, vise à étudier les rendez-vous amoureux en utilisant la base de données [Speed Dating](kaggle.com/datasets/whenamancodes/speed-dating) disponible sur Kaggle. Cette base de données a été créée à partir de données collectées lors d'événements de speed dating aux États-Unis, où les participants ont rempli des questionnaires avant et après les événements.
+# Speed Dating : Prédiction d'un match amoureux.
+Ce projet de Data Science, réalisé en Python 3, vise à étudier les rendez-vous amoureux en utilisant la base de données [Speed Dating](https://kaggle.com/datasets/whenamancodes/speed-dating) disponible sur Kaggle. Cette base de données a été créée à partir de données collectées lors d'événements de speed dating aux États-Unis, où les participants ont rempli des questionnaires avant et après les événements.
 
 ## Contexte
 L'objectif de ce projet est de prédire si deux personnes célibataires peuvent former un couple en se basant sur leurs préférences, leurs traits de personnalité et d'autres caractéristiques démographiques. Pour cela, nous allons utiliser des techniques de classification binaire pour prédire les résultats "oui" ou "non" en fonction des caractéristiques des individus.
